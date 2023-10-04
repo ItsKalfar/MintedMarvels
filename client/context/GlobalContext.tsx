@@ -165,7 +165,6 @@ export const GlobalContextProvider: React.FC<{ children: ReactNode }> = ({
 
   const getAllItems = async () => {
     try {
-      // Create an Ethereum provider
       const provider = new JsonRpcProvider(rpcUrl);
       // Create a contract instance for the Marketplace contract
       const Marketplace = new Contract(
