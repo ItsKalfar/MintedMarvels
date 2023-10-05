@@ -12,6 +12,7 @@ import {
   JsonRpcProvider,
   formatEther,
   parseUnits,
+  encodeBase64,
 } from "ethers";
 import { useToast } from "@/components/ui/use-toast";
 import NFTABI from "@/constants/NFT.json";
@@ -19,7 +20,7 @@ import ZetherABI from "@/constants/Zether.json";
 import MarketplaceABI from "@/constants/Marketplace.json";
 import axios from "axios";
 import { Buffer } from "buffer";
-import { create as ipfsHttpClient } from "ipfs-http-client";
+import { createReadStream } from "fs";
 
 type GlobalContextType = {
   connectWallet: () => void;
@@ -76,26 +77,33 @@ export const GlobalContextProvider: React.FC<{ children: ReactNode }> = ({
   const IPFSApiKey: string = process.env.NEXT_PUBLIC_IPFS_API_KEY!;
   const IPFSApiSecrete: string = process.env.NEXT_PUBLIC_IPFS_API_SECRET!;
   const IPFSSubdomain: string = process.env.NEXT_PUBLIC_IPFS_SUB_DOMAIN!;
+  const IPFSEndPoint: string = process.env.NEXT_PUBLIC_IPFS_API_ENDPOINT!;
 
-  const auth = `Basic ${Buffer.from(`${IPFSApiKey}:${IPFSApiSecrete}`).toString(
-    "base64"
-  )}`;
+  const uploadFileToIPFS = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append("file", file);
 
-  const client = ipfsHttpClient({
-    host: "ipfs.infura.io",
-    protocol: "https",
-    port: 5001,
-    headers: {
-      authorization: auth,
-    },
-  });
-
-  const uploadFileToIPFS = async (file: File) => {
     try {
-      const uploadResult = await client.add(file);
-      return `${IPFSSubdomain}/ipfs/${uploadResult.path}`;
+      const axiosConfig = {
+        baseURL: IPFSEndPoint,
+        headers: {
+          Authorization: `Basic ${Buffer.from(
+            `${IPFSApiKey}:${IPFSApiSecrete}`
+          ).toString("base64")}`,
+        },
+        "Content-Type": "multipart/form-data",
+      };
+
+      const response = await axios.post("/api/v0/add", formData, axiosConfig);
+      if (response.status === 200) {
+        const data = response.data;
+        const ipfsUrl = `${IPFSSubdomain}/ipfs/${data.Hash}`;
+        return ipfsUrl;
+      } else {
+        throw new Error("Failed to upload to IPFS");
+      }
     } catch (error: any) {
-      throw new Error("Error uploading file to IPFS: " + error.message);
+      throw new Error("Error uploading image to IPFS: " + error.message);
     }
   };
 
@@ -104,8 +112,17 @@ export const GlobalContextProvider: React.FC<{ children: ReactNode }> = ({
     description: string,
     category: string,
     imageUrl: string
-  ) => {
+  ): Promise<string> => {
     try {
+      const axiosConfig = {
+        baseURL: IPFSEndPoint,
+        headers: {
+          Authorization: `Basic ${Buffer.from(
+            `${IPFSApiKey}:${IPFSApiSecrete}`
+          ).toString("base64")}`,
+        },
+        "Content-Type": "multipart/form-data",
+      };
       const data = JSON.stringify({
         name,
         description,
@@ -113,10 +130,20 @@ export const GlobalContextProvider: React.FC<{ children: ReactNode }> = ({
         image: imageUrl,
       });
 
-      const uploadResult = await client.add(data);
-      return `${IPFSSubdomain}/ipfs/${uploadResult.path}`;
+      const response = await axios.post(
+        "/api/v0/pin/add?arg=QmeGAVddnBSnKc1DLE7DLV9uuTqo5F7QbaveTjr45JUdQn",
+        data,
+        axiosConfig
+      );
+      if (response.status === 200) {
+        const data = response.data;
+        const ipfsUrl = `${IPFSSubdomain}/ipfs/${data.Pins[0]}`;
+        return ipfsUrl;
+      } else {
+        throw new Error("Failed to upload NFT data to IPFS");
+      }
     } catch (error: any) {
-      throw new Error("Error uploading NFT data to IPFS: " + error.message);
+      throw new Error("Error uploading JSON to IPFS: " + error.message);
     }
   };
 
@@ -392,7 +419,7 @@ export const GlobalContextProvider: React.FC<{ children: ReactNode }> = ({
 
   useEffect(() => {
     checkIfWalletIsConnected();
-    getAllItems();
+    // getAllItems();
     getBalance();
   }, [currentAccount, isLoading]);
 

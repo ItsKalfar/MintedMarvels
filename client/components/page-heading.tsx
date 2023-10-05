@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { IoIosArrowBack } from "react-icons/io";
-import { SellNFT } from "./sell-nft-dialog";
+import SellNFT from "./sell-nft-dialog";
 import { useGlobalContext } from "@/context/GlobalContext";
 import Link from "next/link";
 

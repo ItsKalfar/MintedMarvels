@@ -105,11 +105,32 @@ export const Navbar: React.FC = () => {
             </Link>
           </NavigationMenuItem>
           <NavigationMenuItem>
-            <Link href="/" legacyBehavior passHref>
-              <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                Source Code
-              </NavigationMenuLink>
-            </Link>
+            <NavigationMenuTrigger>Learn More</NavigationMenuTrigger>
+            <NavigationMenuContent>
+              <ul className="grid gap-3 p-6 md:w-[400px] lg:w-[350px] lg:grid-cols-1">
+                <ListItem
+                  href="https://github.com/ItsKalfar/MintedMarvels"
+                  title="Source Code"
+                  target="_blank"
+                >
+                  Styles for headings, paragraphs, lists...etc
+                </ListItem>
+                <ListItem
+                  href="https://github.com/ItsKalfar"
+                  title="GitHub"
+                  target="_blank"
+                >
+                  GitHub
+                </ListItem>
+                <ListItem
+                  href="https://www.linkedin.com/in/sagar-gund-037b72255/"
+                  title="LinkedIn"
+                  target="_blank"
+                >
+                  GitHub
+                </ListItem>
+              </ul>
+            </NavigationMenuContent>
           </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>

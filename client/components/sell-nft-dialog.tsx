@@ -38,7 +38,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "./ui/textarea";
 import { FileInput } from "./file-input";
 
-export const SellNFT = () => {
+export default function SellNFT() {
   const { currentAccount, createSale, uploadFileToIPFS, uploadNFTToIPFS } =
     useGlobalContext();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -56,7 +56,12 @@ export const SellNFT = () => {
       })
       .max(25, { message: "Name cannot be more than 25 characters" }),
     description: z.string(),
-    price: z.string().min(1),
+    price: z
+      .string()
+      .min(1, {
+        message: "Name must be at least 3 characters.",
+      })
+      .max(10, { message: "Name cannot be more than 25 characters" }),
 
     category: z
       .string({ required_error: "Please select the category" })
@@ -69,6 +74,7 @@ export const SellNFT = () => {
       name: "",
       description: "",
       category: "Art",
+      price: "",
     },
   });
 
@@ -103,7 +109,6 @@ export const SellNFT = () => {
         category,
         imageUrl
       );
-
       createSale(dataUrl, price, category);
     } catch (error: any) {
       toast({ title: `${error}`, description: `${error.message}` });
@@ -202,4 +207,4 @@ export const SellNFT = () => {
       </DialogContent>
     </Dialog>
   );
-};
+}
