@@ -25,7 +25,7 @@ export default function Footer() {
           </span>
         </Link>
         <NavigationMenu>
-          <NavigationMenuList className="flex flex-col">
+          <NavigationMenuList className="flex lg:flex-row sm:flex-col">
             <NavigationMenuItem>
               <Link href="/mynfts" legacyBehavior passHref>
                 <NavigationMenuLink className={navigationMenuTriggerStyle()}>

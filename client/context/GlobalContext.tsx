@@ -90,7 +90,6 @@ export const GlobalContextProvider: React.FC<{ children: ReactNode }> = ({
       if (response.status === 200) {
         const data = response.data;
         const ipfsUrl = `${IPFSSubdomain}/ipfs/${data.Hash}`;
-        console.log("Image Url is : ", ipfsUrl);
         return ipfsUrl;
       } else {
         throw new Error("Failed to upload to IPFS");
@@ -222,7 +221,6 @@ export const GlobalContextProvider: React.FC<{ children: ReactNode }> = ({
         allItems.push(item);
       }
       setAllItems(allItems);
-      console.log(allItems);
     } catch (error: any) {
       console.error("Error fetching items:", error);
     }

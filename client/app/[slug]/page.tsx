@@ -71,7 +71,7 @@ export default function Page({ params }: { params: { slug: string } }) {
                       onClick={() => buyItem(itemId, price)}
                       variant="outline"
                     >
-                      Buy NFT
+                      Buy
                     </Button>
                   )}
                 </div>

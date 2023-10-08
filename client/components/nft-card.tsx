@@ -36,7 +36,7 @@ export const NFTCard: React.FC<{
               <p className="text-sm font-semibold">{price.toString()} ZTH</p>
 
               <Button onClick={() => buyItem(itemId, price)} variant="outline">
-                Buy NFT
+                Buy
               </Button>
             </div>
           )}
