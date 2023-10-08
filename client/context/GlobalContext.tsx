@@ -12,15 +12,12 @@ import {
   JsonRpcProvider,
   formatEther,
   parseUnits,
-  encodeBase64,
 } from "ethers";
 import { useToast } from "@/components/ui/use-toast";
 import NFTABI from "@/constants/NFT.json";
 import ZetherABI from "@/constants/Zether.json";
 import MarketplaceABI from "@/constants/Marketplace.json";
 import axios from "axios";
-import { Buffer } from "buffer";
-import { createReadStream } from "fs";
 
 type GlobalContextType = {
   connectWallet: () => void;
@@ -84,20 +81,16 @@ export const GlobalContextProvider: React.FC<{ children: ReactNode }> = ({
     formData.append("file", file);
 
     try {
-      const axiosConfig = {
-        baseURL: IPFSEndPoint,
-        headers: {
-          Authorization: `Basic ${Buffer.from(
-            `${IPFSApiKey}:${IPFSApiSecrete}`
-          ).toString("base64")}`,
+      const response = await axios.post(IPFSEndPoint, formData, {
+        auth: {
+          username: IPFSApiKey,
+          password: IPFSApiSecrete,
         },
-        "Content-Type": "multipart/form-data",
-      };
-
-      const response = await axios.post("/api/v0/add", formData, axiosConfig);
+      });
       if (response.status === 200) {
         const data = response.data;
         const ipfsUrl = `${IPFSSubdomain}/ipfs/${data.Hash}`;
+        console.log("Image Url is : ", ipfsUrl);
         return ipfsUrl;
       } else {
         throw new Error("Failed to upload to IPFS");
@@ -114,30 +107,26 @@ export const GlobalContextProvider: React.FC<{ children: ReactNode }> = ({
     imageUrl: string
   ): Promise<string> => {
     try {
-      const axiosConfig = {
-        baseURL: IPFSEndPoint,
-        headers: {
-          Authorization: `Basic ${Buffer.from(
-            `${IPFSApiKey}:${IPFSApiSecrete}`
-          ).toString("base64")}`,
-        },
-        "Content-Type": "multipart/form-data",
-      };
-      const data = JSON.stringify({
+      const nftDataJSON = JSON.stringify({
         name,
         description,
         category,
         image: imageUrl,
       });
-
-      const response = await axios.post(
-        "/api/v0/pin/add?arg=QmeGAVddnBSnKc1DLE7DLV9uuTqo5F7QbaveTjr45JUdQn",
-        data,
-        axiosConfig
+      const formData = new FormData();
+      formData.append(
+        "file",
+        new Blob([nftDataJSON], { type: "application/json" })
       );
+
+      const response = await axios.post(IPFSEndPoint, formData, {
+        auth: {
+          username: IPFSApiKey,
+          password: IPFSApiSecrete,
+        },
+      });
       if (response.status === 200) {
-        const data = response.data;
-        const ipfsUrl = `${IPFSSubdomain}/ipfs/${data.Pins[0]}`;
+        const ipfsUrl = `${IPFSSubdomain}/ipfs/${response.data.Hash}`;
         return ipfsUrl;
       } else {
         throw new Error("Failed to upload NFT data to IPFS");
@@ -233,6 +222,7 @@ export const GlobalContextProvider: React.FC<{ children: ReactNode }> = ({
         allItems.push(item);
       }
       setAllItems(allItems);
+      console.log(allItems);
     } catch (error: any) {
       console.error("Error fetching items:", error);
     }
@@ -242,9 +232,7 @@ export const GlobalContextProvider: React.FC<{ children: ReactNode }> = ({
     try {
       let ethereum: any;
       let capturedTokenId: number | null = null;
-
       let priceInWei: bigint = parseUnits(price, 18);
-
       if (typeof window !== "undefined") {
         ethereum = (window as any).ethereum;
       }
@@ -257,11 +245,9 @@ export const GlobalContextProvider: React.FC<{ children: ReactNode }> = ({
         return;
       }
       setIsLoading(true);
-
       // Create a provider
       const provider = new BrowserProvider(ethereum);
       const signer = await provider.getSigner();
-
       // Create contract instances
       const Marketplace = new Contract(
         MarketPlaceContract,
@@ -278,17 +264,14 @@ export const GlobalContextProvider: React.FC<{ children: ReactNode }> = ({
           resolve();
         });
       });
-
       const Zether = new Contract(ZetherContract, ZetherABI.abi, signer);
       const NFT = new Contract(NftContract, NFTABI.abi, signer);
-
       const waitForEvent = new Promise<void>((resolve) => {
         NFT.on("NFTMinted", (tokenId) => {
           capturedTokenId = tokenId;
           resolve();
         });
       });
-
       toast({
         title: "Creating NFT",
         description:
@@ -298,16 +281,13 @@ export const GlobalContextProvider: React.FC<{ children: ReactNode }> = ({
       const creation = await NFT.createNFT(url);
       await creation.wait();
       await waitForEvent;
-
       if (capturedTokenId !== null) {
         // Approve the NFT for listing
         const approval = await Zether.approve(
           MarketPlaceContract,
           BigInt(1 * 10 ** 18)
         );
-
         await approval.wait();
-
         toast({
           title: "Listing it on the marketplace",
           description:
@@ -419,7 +399,7 @@ export const GlobalContextProvider: React.FC<{ children: ReactNode }> = ({
 
   useEffect(() => {
     checkIfWalletIsConnected();
-    // getAllItems();
+    getAllItems();
     getBalance();
   }, [currentAccount, isLoading]);
 

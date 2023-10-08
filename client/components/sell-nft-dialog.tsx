@@ -5,9 +5,9 @@ import { useGlobalContext } from "@/context/GlobalContext";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useForm } from "react-hook-form";
-import { parseEther } from "ethers";
-
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { useToast } from "@/components/ui/use-toast";
+
 import {
   Dialog,
   DialogContent,
@@ -42,7 +42,9 @@ export default function SellNFT() {
   const { currentAccount, createSale, uploadFileToIPFS, uploadNFTToIPFS } =
     useGlobalContext();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
+  const { formState } = useForm();
 
   const handleFileChange = (file: File | null) => {
     setSelectedFile(file);
@@ -110,13 +112,15 @@ export default function SellNFT() {
         imageUrl
       );
       createSale(dataUrl, price, category);
+      form.reset();
+      setOpen(!open);
     } catch (error: any) {
       toast({ title: `${error}`, description: `${error.message}` });
     }
   }
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>Sell NFT</Button>
       </DialogTrigger>
@@ -201,6 +205,7 @@ export default function SellNFT() {
               )}
             />
             <FileInput onFileChange={handleFileChange} />
+
             <Button type="submit">Sell NFT</Button>
           </form>
         </Form>
